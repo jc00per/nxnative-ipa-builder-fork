@@ -335,7 +335,7 @@ jobs:
 
           def xci_names(path):
               names = []
-              pending = [(0x10000, b"HFS0")]
+              pending = [(0xF000, b"HFS0")]
               visited = set()
 
               try:
