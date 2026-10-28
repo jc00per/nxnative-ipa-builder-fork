@@ -82,14 +82,19 @@ jobs:
             fi
 
             echo "Downloading $(basename "$output")..."
-            gdown "$url" -O "$output"
- 
-            if [[ ! -s "$output" ]]; then
-              echo "::error::Downloaded file is empty."
-              exit 1
-            fi
- 
-            file "$output"
+            for attempt in 1 2 3; do
+              if gdown --continue "$url" -O "$output" \
+                && [[ -s "$output" ]]; then
+                file "$output"
+                return
+              fi
+
+              echo "Download attempt $attempt failed; retrying..."
+              sleep $((attempt * 10))
+            done
+
+            echo "::error::Failed to download $(basename "$output") after 3 attempts."
+            exit 1
           }
  
           download_file "$GAME_URL" "$WORK/game.download"
