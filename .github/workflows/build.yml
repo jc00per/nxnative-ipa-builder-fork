@@ -281,15 +281,16 @@ jobs:
  
           root = Path(sys.argv[1])
           extensions = {".nsp", ".xci", ".nsz", ".xcz"}
- 
-          def pfs0_names(path):
+
+          def container_names(path, offset, magic, entry_size, name_offset):
               try:
                   with path.open("rb") as f:
+                      f.seek(offset)
                       header = f.read(16)
- 
-                      if len(header) != 16 or header[:4] != b"PFS0":
+
+                      if len(header) != 16 or header[:4] != magic:
                           return []
- 
+
                       count, string_size = struct.unpack_from(
                           "<II", header, 4
                       )
@@ -307,7 +308,7 @@ jobs:
  
                       for i in range(count):
                           offset = struct.unpack_from(
-                              "<I", entries, i * 0x18 + 0x10
+                              "<I", entries, i * entry_size + name_offset
                           )[0]
  
                           if offset >= len(strings):
@@ -328,14 +329,94 @@ jobs:
  
               except (OSError, struct.error):
                   return []
- 
+
+          def pfs0_names(path):
+              return container_names(path, 0, b"PFS0", 0x18, 0x10)
+
+          def xci_names(path):
+              names = []
+              pending = [(0xF000, b"HFS0")]
+              visited = set()
+
+              try:
+                  with path.open("rb") as f:
+                      while pending:
+                          container_offset, magic = pending.pop()
+
+                          if container_offset in visited:
+                              continue
+                          visited.add(container_offset)
+
+                          f.seek(container_offset)
+                          header = f.read(16)
+
+                          if len(header) != 16 or header[:4] != magic:
+                              continue
+
+                          count, string_size = struct.unpack_from(
+                              "<II", header, 4
+                          )
+
+                          if count > 100000 or string_size > 100000000:
+                              continue
+
+                          entry_size = 0x40 if magic == b"HFS0" else 0x18
+                          name_offset = 0x30 if magic == b"HFS0" else 0x10
+                          entries = f.read(count * entry_size)
+                          strings = f.read(string_size)
+                          data_offset = (
+                              container_offset
+                              + 0x10
+                              + count * entry_size
+                              + string_size
+                          )
+
+                          if len(entries) != count * entry_size:
+                              continue
+
+                          for i in range(count):
+                              entry = i * entry_size
+                              file_offset, file_size = struct.unpack_from(
+                                  "<QQ", entries, entry
+                              )
+                              name_start = struct.unpack_from(
+                                  "<I", entries, entry + name_offset
+                              )[0]
+
+                              if name_start >= len(strings):
+                                  continue
+
+                              name_end = strings.find(b"\0", name_start)
+                              if name_end < 0:
+                                  continue
+
+                              name = strings[name_start:name_end].decode(
+                                  errors="replace"
+                              )
+                              names.append(name)
+
+                              child_offset = data_offset + file_offset
+                              f.seek(child_offset)
+                              child_magic = f.read(4)
+                              if child_magic in (b"HFS0", b"PFS0"):
+                                  pending.append((child_offset, child_magic))
+
+              except (OSError, struct.error):
+                  return names
+
+              return names
+
           candidates = set()
- 
+
           for path in root.iterdir():
               if not path.is_file() or path.suffix.lower() not in extensions:
                   continue
- 
-              for name in pfs0_names(path):
+
+              names = pfs0_names(path)
+              if path.suffix.lower() in {".xci", ".xcz"}:
+                  names.extend(xci_names(path))
+
+              for name in names:
                   match = re.fullmatch(
                       r"([0-9A-Fa-f]{16})[0-9A-Fa-f]{16}\.tik",
                       name,
