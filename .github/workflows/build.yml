@@ -13,10 +13,10 @@ on:
           - "iPhone 15 or older (BC fallback)"
           - "iPhone 15 Pro/Pro Max or newer (standard)"
       profile_id:
-        description: "Optional nxnative profile ID override (leave blank for automatic detection)"
+        description: "Base game title ID (manual override; clear for automatic detection)"
         required: false
         type: string
-        default: ""
+        default: "0100DCA0064A2000"
  
 permissions:
   contents: read
