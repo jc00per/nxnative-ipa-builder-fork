@@ -85,36 +85,41 @@ jobs:
             file_id="$(python - "$url" <<'PY'
           import re
           import sys
-          from urllib.parse import urlparse, parse_qs
- 
-          url = sys.argv[1].strip()
-          parsed = urlparse(url)
+          from urllib.parse import parse_qs, urlparse
+
+          value = sys.argv[1].strip()
+          parsed = urlparse(value)
           query = parse_qs(parsed.query)
+          host = parsed.netloc.lower().split(":", 1)[0]
           file_id = None
- 
-          if parsed.netloc.lower() in (
-              "drive.google.com",
-              "www.drive.google.com",
+
+          if host.endswith("google.com") or host.endswith(
+              "googleusercontent.com"
           ):
-              match = re.search(r"/file/d/([^/]+)", parsed.path)
+              match = re.search(
+                  r"/(?:file/d|document/d|spreadsheets/d|folders)/"
+                  r"([^/?]+)",
+                  parsed.path,
+              )
               if match:
                   file_id = match.group(1)
               elif query.get("id"):
                   file_id = query["id"][0]
- 
+
           if not file_id and re.fullmatch(
-              r"[-A-Za-z0-9_]{20,}", url
+              r"[-A-Za-z0-9_]{20,}", value
           ):
-              file_id = url
- 
+              file_id = value
+
           if not file_id:
               raise SystemExit(
-                  "Could not extract a Google Drive file ID."
+                  "Could not extract a Google Drive file ID from the "
+                  "configured URL. Use a Drive share URL or file ID."
               )
- 
+
           print(file_id)
           PY
-          )"
+            )"
  
             echo "Downloading $(basename "$output")..."
             gdown "$file_id" -O "$output"
