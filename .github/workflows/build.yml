@@ -307,10 +307,10 @@ jobs:
                       if count > 100000 or string_size > 100000000:
                           return []
  
-                      entries = f.read(count * 0x18)
+                      entries = f.read(count * entry_size)
                       strings = f.read(string_size)
  
-                      if len(entries) != count * 0x18:
+                      if len(entries) != count * entry_size:
                           return []
  
                       names = []
