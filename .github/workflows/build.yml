@@ -133,18 +133,21 @@ jobs:
               b"Rar!\x1a\x07\x01\x00",
           )
  
-          def validate_package(path):
+          def read_magic(path, offset=0):
               with path.open("rb") as f:
-                  magic = f.read(4)
- 
+                  f.seek(offset)
+                  return f.read(4)
+
+          def validate_package(path):
               suffix = path.suffix.lower()
- 
+              magic = read_magic(path)
+
               if suffix in (".nsp", ".nsz") and magic != b"PFS0":
                   raise SystemExit(
                       f"Invalid {suffix} package signature: {path.name}"
                   )
- 
-              if suffix in (".xci", ".xcz") and magic != b"HEAD":
+
+              if suffix in (".xci", ".xcz") and read_magic(path, 0x100) != b"HEAD":
                   raise SystemExit(
                       f"Invalid {suffix} package signature: {path.name}"
                   )
@@ -172,11 +175,10 @@ jobs:
                   print(f"No {label} download; skipping.")
                   return
  
-              with source.open("rb") as f:
-                  signature = f.read(8)
- 
+              signature = read_magic(source)
+
               is_rar = any(
-                  signature.startswith(magic)
+                  signature == magic[:4]
                   for magic in rar_signatures
               )
  
@@ -217,9 +219,9 @@ jobs:
                       "checking as a direct package."
                   )
  
-                  if signature[:4] == b"PFS0":
+                  if signature == b"PFS0":
                       extension = ".nsp"
-                  elif signature[:4] == b"HEAD":
+                  elif read_magic(source, 0x100) == b"HEAD":
                       extension = ".xci"
                   else:
                       raise SystemExit(
