@@ -272,8 +272,12 @@ jobs:
         run: |
           set -euo pipefail
           GAME_DIR="$RUNNER_TEMP/GameFiles"
- 
-          DETECTED_ID="$(python - "$GAME_DIR" <<'PY'
+
+          if [[ -n "${PROFILE_OVERRIDE:-}" ]]; then
+            DETECTED_ID="$PROFILE_OVERRIDE"
+            echo "Using configured profile ID override: $DETECTED_ID"
+          else
+            DETECTED_ID="$(python - "$GAME_DIR" <<'PY'
           import re
           import struct
           import sys
@@ -407,6 +411,15 @@ jobs:
               return names
 
           candidates = set()
+          title_id_pattern = re.compile(
+              r"(?<![0-9A-Fa-f])([0-9A-Fa-f]{16})(?:[._-]|$)"
+          )
+
+          def add_candidate(value):
+              title_id = int(value, 16)
+
+              if (title_id & 0xFFF) == 0:
+                  candidates.add(f"{title_id:016X}")
 
           for path in root.iterdir():
               if not path.is_file() or path.suffix.lower() not in extensions:
@@ -421,35 +434,33 @@ jobs:
                       r"([0-9A-Fa-f]{16})[0-9A-Fa-f]{16}\.tik",
                       name,
                   )
- 
+
                   if match:
-                      title_id = int(match.group(1), 16)
- 
-                      if (title_id & 0xFFF) == 0:
-                          candidates.add(f"{title_id:016X}")
- 
+                      add_candidate(match.group(1))
+
+                  for match in title_id_pattern.finditer(name):
+                      add_candidate(match.group(1))
+
               match = re.search(
                   r"\[([0-9A-Fa-f]{16})\]",
                   path.name,
               )
- 
+
               if match:
-                  title_id = int(match.group(1), 16)
- 
-                  if (title_id & 0xFFF) == 0:
-                      candidates.add(f"{title_id:016X}")
- 
+                  add_candidate(match.group(1))
+
           if len(candidates) != 1:
               raise SystemExit(
                   "Could not uniquely identify the base game's title ID. "
                   f"Candidates found: {sorted(candidates)}. "
                   "Check the base NSP and its ticket/filename."
               )
- 
+
           print(next(iter(candidates)))
           PY
-          )"
- 
+            )"
+          fi
+
           PROFILE_ID="${PROFILE_OVERRIDE:-$DETECTED_ID}"
           PROFILE_ID="$(echo "$PROFILE_ID" | tr '[:lower:]' '[:upper:]')"
  
@@ -458,7 +469,7 @@ jobs:
             exit 1
           fi
  
-          echo "Detected base title ID: $DETECTED_ID"
+          echo "Selected base title ID: $DETECTED_ID"
           echo "Shader profile ID: $PROFILE_ID"
           echo "DM_GAME=$PROFILE_ID" >> "$GITHUB_ENV"
           echo "DETECTED_TITLE_ID=$DETECTED_ID" >> "$GITHUB_ENV"
