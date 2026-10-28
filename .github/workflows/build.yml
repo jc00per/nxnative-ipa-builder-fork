@@ -370,7 +370,7 @@ jobs:
                               continue
 
                           entry_size = 0x40 if magic == b"HFS0" else 0x18
-                          name_offset = 0x30 if magic == b"HFS0" else 0x10
+                          name_offset = 0x10
                           entries = f.read(count * entry_size)
                           strings = f.read(string_size)
                           data_offset = (
