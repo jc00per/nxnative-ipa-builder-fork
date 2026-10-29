@@ -17,6 +17,7 @@ A legally obtained Nintendo Switch game dump, normally an .nsp or .xci file, or 
 The matching prod.keys file.
 The matching game update, if applicable.
 The matching DLC files, if applicable.
+Optional mod archives, if applicable. The workflow supports up to 10 RomFS mod archives.
 You do not need a Mac. GitHub Actions provides the cloud build machine.
 Keep your keys private. Do not post them publicly or share them with other people. Anyone with access to your keys may be able to access protected game content.
 
@@ -68,6 +69,12 @@ Fourth secret:
 DLC_URL
 Dropbox sharing link for the DLC 
 Only add the update and DLC secrets if you have the corresponding files and want to use them.
+Optional mod secrets:
+`Mod_URL` through `Mod_URL10`. Each archive must contain one `romfs` directory
+(case-insensitive), with the modded files below it. Common Atmosphere layouts such as
+`atmosphere/contents/<title ID>/romfs/...` are supported. Mods are applied in
+numbered order, so a later mod replaces the same file from an earlier mod.
+ExeFS/code mods are not supported by this workflow.
 For multiple files, create additional secrets using the numbered names `Update_URL2` through
 `Update_URL10` and `DLC_URL2` through `DLC_URL10`. The unnumbered names remain the first
 update and DLC. The workflow downloads and includes every configured entry, in numbered order.
