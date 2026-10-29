@@ -5,105 +5,18 @@ I adapted and updated the guide taken from u/PersonalAnswer8664 [Reddit].
 This beginner-friendly guide explains how to use GitHub Actions to build an iOS IPA with nxnative without needing a Mac. You will use Dropbox to host your game files and GitHub to run the build on a cloud macOS machine.
 You do not need to know how to code, and you do not need to fork either nxnative source repository. You will use this GitHub repository containing the build workflow.
 
-1. Games reported to work with nxnative
-The following combined list comes from the game lists in the two nxnative repositories. Compatibility varies by iPhone model, game version, and build configuration.
-13 Sentinels: Aegis Rim
-Absolum
-Ace Attorney Investigations Collection
-Advance Wars 1+2: Re-Boot Camp
-AI: The Somnium Files
-AI: The Somnium Files – nirvanA Initiative
-Animal Crossing: New Horizons
-Animal Well
-Astral Chain
-Balatro
-BALL x PIT
-Bayonetta
-Bayonetta 2
-Bayonetta 3
-Big Brain Academy: Brain vs. Brain
-Blasphemous
-Blasphemous 2
-Brain Memory Training Academy
-Captain Toad: Treasure Tracker
-Catherine: Full Body
-Celeste
-Cuphead
-DARK SOULS: REMASTERED
-Digimon Story Cyber Sleuth: Complete Edition
-Donkey Kong Country Returns HD
-Donkey Kong Country: Tropical Freeze
-DRAGON QUEST VII Reimagined
-DRAGON QUEST XI S: Echoes of an Elusive Age – Definitive Edition
-FINAL FANTASY CRYSTAL CHRONICLES Remastered Edition
-FINAL FANTASY RESONANCE
-FINAL FANTASY TACTICS: The Ivalice Chronicles
-Fire Emblem Engage
-Fire Emblem: Three Houses
-Ghost Trick: Phantom Detective
-The Great Ace Attorney Chronicles
-Hades
-Hades II
-Hollow Knight: Silksong
-Hyrule Warriors: Age of Calamity
-Kirby and the Forgotten Land
-Luigi's Mansion 3
-Mario + Rabbids Sparks of Hope
-Mario Kart 8 Deluxe
-Mario vs. Donkey Kong
-Metroid Dread
-Monster Hunter Rise
-Monster Train 2
-NieR:Automata The End of YoRHa Edition
-OCTOPATH TRAVELER
-Octopath Traveler 0
-Octopath Traveler II
-Paper Mario: The Thousand-Year Door
-Patrick's Parabox
-Persona 5 Royal
-Pikmin 4
-Pokémon Brilliant Diamond
-Pokémon Legends: Z-A
-Pokémon Scarlet
-Pokémon Shield
-Pokémon Sword
-Portal
-Raging Loop
-Return of the Obra Dinn
-Rhythm Heaven Groove
-ROMANCE OF THE THREE KINGDOMS 8 REMAKE
-Sea of Stars
-SHIN MEGAMI TENSEI V: Vengeance
-Silver Pines
-Stardew Valley
-STEINS;GATE RE:BOOT
-Super Mario 3D World + Bowser's Fury
-Super Mario Bros. Wonder
-Super Mario Galaxy
-Super Mario Galaxy 2
-Super Mario Odyssey
-Super Smash Bros. Ultimate
-Taiko Risshiden V DX
-The Legend of Zelda: Breath of the Wild
-The Legend of Zelda: Echoes of Wisdom
-The Legend of Zelda: Link's Awakening
-The Legend of Zelda: Tears of the Kingdom
-Unicorn Overlord
-Xenoblade Chronicles 2
-Xenoblade Chronicles 3
-Yoshi's Crafted World
+1. Before starting, check if your game has been checked to work fine on the nxnative original repo.
 WARNING: Any game not on this list is not guaranteed to work. Even games on the list may fail to build or run correctly on your particular device. This is a list of reported titles, not a guarantee that every game is compatible.
 Use game dumps and keys you are legally entitled to use.
 
 2. What you need
 Before starting, gather these items:
 A GitHub account: https://github.com/
-A Google account with Google Drive: https://drive.google.com/
+A Dropbox account: https://dropbox.com/
 A legally obtained Nintendo Switch game dump, normally an .nsp or .xci file, or an archive containing one.
 The matching prod.keys file.
 The matching game update, if applicable.
 The matching DLC files, if applicable.
-The universal nxnative workflow YAML: https://pastebin.com/XbJt5p3c
 You do not need a Mac. GitHub Actions provides the cloud build machine.
 Keep your keys private. Do not post them publicly or share them with other people. Anyone with access to your keys may be able to access protected game content.
 
