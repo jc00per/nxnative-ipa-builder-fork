@@ -494,7 +494,6 @@ jobs:
             exit 1
           fi
  
-          python "$CHAIN_SCRIPT" --update-lock
           python "$CHAIN_SCRIPT" --header
  
       - name: Build unsigned IPA
