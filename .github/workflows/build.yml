@@ -39,7 +39,9 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: seedds/nxnative
-          ref: main
+          # Keep the source compatible with the iOS SDK shipped on macos-latest.
+          # Later commits use the iOS 27-only CMMotionManager.deviceMotionBody API.
+          ref: 971d336516a20dde998f0ede29db7e380a8ee6dd
  
       - name: Set up Python
         uses: actions/setup-python@v5
