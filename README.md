@@ -2,8 +2,8 @@
 
 I adapted and updated the guide taken from u/PersonalAnswer8664 [Reddit].
 
-This beginner-friendly guide explains how to use GitHub Actions to build an iOS IPA with nxnative without needing a Mac. You will use Google Drive to host your game files and GitHub to run the build on a cloud macOS machine.
-You do not need to know how to code, and you do not need to fork either nxnative source repository. You will create your own GitHub repository containing the build workflow.
+This beginner-friendly guide explains how to use GitHub Actions to build an iOS IPA with nxnative without needing a Mac. You will use Dropbox to host your game files and GitHub to run the build on a cloud macOS machine.
+You do not need to know how to code, and you do not need to fork either nxnative source repository. You will use this GitHub repository containing the build workflow.
 
 1. Games reported to work with nxnative
 The following combined list comes from the game lists in the two nxnative repositories. Compatibility varies by iPhone model, game version, and build configuration.
