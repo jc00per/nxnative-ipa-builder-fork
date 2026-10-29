@@ -68,7 +68,9 @@ Fourth secret:
 DLC_URL
 Dropbox sharing link for the DLC 
 Only add the update and DLC secrets if you have the corresponding files and want to use them.
-In the case of more than 1 DLC or Update, I don't know what to do. The og guide didn't explain it, so for my builds I just used one DLC and one Update. Choose wisely! 
+For multiple files, create additional secrets using the numbered names `Update_URL2` through
+`Update_URL10` and `DLC_URL2` through `DLC_URL10`. The unnumbered names remain the first
+update and DLC. The workflow downloads and includes every configured entry, in numbered order.
 Important: The names must match exactly, including capitalization and underscores. Game_URL is not the same as game_url.
 Do not paste the contents of your keys file into a secret. The workflow expects a link from which it can download the file.
 To create or change a secret:
