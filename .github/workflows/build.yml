@@ -66,7 +66,25 @@ jobs:
         env:
           GAME_URL: ${{ secrets.Game_URL }}
           UPDATE_URL: ${{ secrets.Update_URL }}
+          UPDATE_URL2: ${{ secrets.Update_URL2 }}
+          UPDATE_URL3: ${{ secrets.Update_URL3 }}
+          UPDATE_URL4: ${{ secrets.Update_URL4 }}
+          UPDATE_URL5: ${{ secrets.Update_URL5 }}
+          UPDATE_URL6: ${{ secrets.Update_URL6 }}
+          UPDATE_URL7: ${{ secrets.Update_URL7 }}
+          UPDATE_URL8: ${{ secrets.Update_URL8 }}
+          UPDATE_URL9: ${{ secrets.Update_URL9 }}
+          UPDATE_URL10: ${{ secrets.Update_URL10 }}
           DLC_URL: ${{ secrets.DLC_URL }}
+          DLC_URL2: ${{ secrets.DLC_URL2 }}
+          DLC_URL3: ${{ secrets.DLC_URL3 }}
+          DLC_URL4: ${{ secrets.DLC_URL4 }}
+          DLC_URL5: ${{ secrets.DLC_URL5 }}
+          DLC_URL6: ${{ secrets.DLC_URL6 }}
+          DLC_URL7: ${{ secrets.DLC_URL7 }}
+          DLC_URL8: ${{ secrets.DLC_URL8 }}
+          DLC_URL9: ${{ secrets.DLC_URL9 }}
+          DLC_URL10: ${{ secrets.DLC_URL10 }}
           KEYS_URL: ${{ secrets.Keys_URL }}
         shell: bash
         run: |
@@ -102,16 +120,48 @@ jobs:
           download_file "$GAME_URL" "$WORK/game.download"
           download_file "$KEYS_URL" "$WORK/prod.keys"
  
-          if [[ -n "${UPDATE_URL:-}" ]]; then
-            download_file "$UPDATE_URL" "$WORK/update.download"
-          else
-            echo "No UPDATE_URL configured; continuing without an update."
+          for index in {1..10}; do
+            if [[ "$index" == "1" ]]; then
+              url="${UPDATE_URL:-}"
+              label="update"
+            else
+              url_var="UPDATE_URL${index}"
+              url="${!url_var:-}"
+              label="update-${index}"
+            fi
+
+            if [[ -n "$url" ]]; then
+              download_file "$url" "$WORK/${label}.download"
+            fi
+          done
+
+          for index in {1..10}; do
+            if [[ "$index" == "1" ]]; then
+              url="${DLC_URL:-}"
+              label="dlc"
+            else
+              url_var="DLC_URL${index}"
+              url="${!url_var:-}"
+              label="dlc-${index}"
+            fi
+
+            if [[ -n "$url" ]]; then
+              download_file "$url" "$WORK/${label}.download"
+            fi
+          done
+
+          if [[ -z "${UPDATE_URL:-}" && -z "${UPDATE_URL2:-}" && -z "${UPDATE_URL3:-}" &&
+            -z "${UPDATE_URL4:-}" && -z "${UPDATE_URL5:-}" && -z "${UPDATE_URL6:-}" &&
+            -z "${UPDATE_URL7:-}" && -z "${UPDATE_URL8:-}" && -z "${UPDATE_URL9:-}" &&
+            -z "${UPDATE_URL10:-}" ]]; then
+            echo "No update URL configured; continuing without an update."
           fi
- 
-          if [[ -n "${DLC_URL:-}" ]]; then
-            download_file "$DLC_URL" "$WORK/dlc.download"
-          else
-            echo "No DLC_URL configured; continuing without DLC."
+
+          if [[ -z "${DLC_URL:-}" && -z "${DLC_URL2:-}" && -z "${DLC_URL3:-}" &&
+            -z "${DLC_URL4:-}" && -z "${DLC_URL5:-}" && -z "${DLC_URL6:-}" &&
+            -z "${DLC_URL7:-}" && -z "${DLC_URL8:-}" && -z "${DLC_URL9:-}" &&
+            -z "${DLC_URL10:-}" ]]; then
+            echo "No DLC URL configured; continuing without DLC."
           fi
  
           chmod 600 "$WORK/prod.keys"
@@ -254,7 +304,12 @@ jobs:
  
           process_download("game")
           process_download("update")
+          for index in range(2, 11):
+              process_download(f"update-{index}")
+
           process_download("dlc")
+          for index in range(2, 11):
+              process_download(f"dlc-{index}")
  
           packages = sorted(
               p for p in game_dir.iterdir()
