@@ -507,6 +507,7 @@ jobs:
           python scripts/build_ipa_from_nsp.py \
             "$GAME_DIR" \
             -k "$WORK/prod.keys" \
+            --allow-other-metal \
             -o "$OUTPUT"
  
           if [[ ! -s "$OUTPUT" ]]; then
