@@ -85,6 +85,16 @@ jobs:
           DLC_URL8: ${{ secrets.DLC_URL8 }}
           DLC_URL9: ${{ secrets.DLC_URL9 }}
           DLC_URL10: ${{ secrets.DLC_URL10 }}
+          MOD_URL: ${{ secrets.Mod_URL }}
+          MOD_URL2: ${{ secrets.Mod_URL2 }}
+          MOD_URL3: ${{ secrets.Mod_URL3 }}
+          MOD_URL4: ${{ secrets.Mod_URL4 }}
+          MOD_URL5: ${{ secrets.Mod_URL5 }}
+          MOD_URL6: ${{ secrets.Mod_URL6 }}
+          MOD_URL7: ${{ secrets.Mod_URL7 }}
+          MOD_URL8: ${{ secrets.Mod_URL8 }}
+          MOD_URL9: ${{ secrets.Mod_URL9 }}
+          MOD_URL10: ${{ secrets.Mod_URL10 }}
           KEYS_URL: ${{ secrets.Keys_URL }}
         shell: bash
         run: |
@@ -150,6 +160,21 @@ jobs:
             fi
           done
 
+          for index in {1..10}; do
+            if [[ "$index" == "1" ]]; then
+              url="${MOD_URL:-}"
+              label="mod"
+            else
+              url_var="MOD_URL${index}"
+              url="${!url_var:-}"
+              label="mod-${index}"
+            fi
+
+            if [[ -n "$url" ]]; then
+              download_file "$url" "$WORK/${label}.download"
+            fi
+          done
+
           if [[ -z "${UPDATE_URL:-}" && -z "${UPDATE_URL2:-}" && -z "${UPDATE_URL3:-}" &&
             -z "${UPDATE_URL4:-}" && -z "${UPDATE_URL5:-}" && -z "${UPDATE_URL6:-}" &&
             -z "${UPDATE_URL7:-}" && -z "${UPDATE_URL8:-}" && -z "${UPDATE_URL9:-}" &&
@@ -162,6 +187,13 @@ jobs:
             -z "${DLC_URL7:-}" && -z "${DLC_URL8:-}" && -z "${DLC_URL9:-}" &&
             -z "${DLC_URL10:-}" ]]; then
             echo "No DLC URL configured; continuing without DLC."
+          fi
+
+          if [[ -z "${MOD_URL:-}" && -z "${MOD_URL2:-}" && -z "${MOD_URL3:-}" &&
+            -z "${MOD_URL4:-}" && -z "${MOD_URL5:-}" && -z "${MOD_URL6:-}" &&
+            -z "${MOD_URL7:-}" && -z "${MOD_URL8:-}" && -z "${MOD_URL9:-}" &&
+            -z "${MOD_URL10:-}" ]]; then
+            echo "No mod URL configured; continuing without mods."
           fi
  
           chmod 600 "$WORK/prod.keys"
@@ -326,6 +358,133 @@ jobs:
           PY
  
           test -s "$WORK/prod.keys"
+
+      - name: Prepare optional mods
+        shell: bash
+        run: |
+          set -euo pipefail
+          WORK="$RUNNER_TEMP/nxnative"
+          MODS_DIR="$WORK/mods"
+          mkdir -p "$MODS_DIR"
+
+          for index in {1..10}; do
+            if [[ "$index" == "1" ]]; then
+              archive="$WORK/mod.download"
+              label="mod"
+            else
+              archive="$WORK/mod-${index}.download"
+              label="mod-${index}"
+            fi
+
+            if [[ ! -f "$archive" ]]; then
+              continue
+            fi
+
+            destination="$MODS_DIR/$label"
+            mkdir -p "$destination"
+            echo "Extracting $label..."
+            unar -f -o "$destination" "$archive"
+          done
+
+          cat > "$WORK/apply_mods.py" <<'PY'
+          import os
+          import shutil
+          import sys
+          from pathlib import Path
+
+          mods_root = Path(sys.argv[1])
+          romfs = Path(sys.argv[2])
+
+          def find_romfs(root):
+              candidates = sorted(
+                  path for path in root.rglob("*")
+                  if path.is_dir() and path.name.lower() == "romfs"
+              )
+              if len(candidates) > 1:
+                  raise SystemExit(
+                      f"{root.name}: multiple romfs directories found; "
+                      "put exactly one RomFS mod in each Mod_URL archive."
+                  )
+              if candidates:
+                  return candidates[0]
+
+              files = [path for path in root.rglob("*") if path.is_file()]
+              if files:
+                  return root
+              raise SystemExit(f"{root.name}: mod archive contains no files.")
+
+          def safe_relative(path, root):
+              try:
+                  relative = path.resolve().relative_to(root.resolve())
+              except ValueError as error:
+                  raise SystemExit(f"Mod path escapes its archive: {path}") from error
+              if any(part in ("", ".", "..") for part in relative.parts):
+                  raise SystemExit(f"Invalid mod path: {relative}")
+              return relative
+
+          mod_dirs = sorted(path for path in mods_root.iterdir() if path.is_dir())
+          if not mod_dirs:
+              print("No mods configured.")
+              raise SystemExit(0)
+
+          romfs.mkdir(parents=True, exist_ok=True)
+          for mod_dir in mod_dirs:
+              source = find_romfs(mod_dir)
+              copied = 0
+              for item in source.rglob("*"):
+                  if not item.is_file():
+                      continue
+                  relative = safe_relative(item, source)
+                  destination = romfs / relative
+                  destination.parent.mkdir(parents=True, exist_ok=True)
+                  shutil.copy2(item, destination)
+                  copied += 1
+              print(f"Applied {mod_dir.name}: {copied} file(s)")
+          PY
+
+          python - "$WORK" <<'PY'
+          import sys
+          from pathlib import Path
+
+          work = Path(sys.argv[1])
+          mods_dir = work / "mods"
+          if not any(path.is_dir() for path in mods_dir.iterdir()):
+              print("No mods configured; leaving the nxnative builder unchanged.")
+              raise SystemExit(0)
+
+          script = next(
+              Path.cwd().glob("scripts/build_ipa_from_nsp.py"),
+              None,
+          )
+          if script is None:
+              raise SystemExit("Could not find build_ipa_from_nsp.py")
+
+          text = script.read_text()
+          old = "run([nx, keys, base, upd or '-', tmp, '--romfs-image']"
+          new = "run([nx, keys, base, upd or '-', tmp]"
+          if old in text:
+              text = text.replace(old, new, 1)
+          elif "run([nx, keys, base, upd or '-', tmp]" not in text:
+              raise SystemExit(
+                  "The pinned nxnative builder changed; mod integration was not applied."
+              )
+          marker = "    swap_in(tmp, dst)\n"
+          overlay = (
+              marker
+              + "    mods = os.environ.get('NXNATIVE_MODS_DIR')\n"
+              + "    if mods:\n"
+              + "        run([sys.executable, os.environ['NXNATIVE_MODS_SCRIPT'], mods, dst / 'RomFS'], log)\n"
+          )
+          if marker not in text:
+              raise SystemExit(
+                  "The pinned nxnative builder changed; mod overlay hook was not applied."
+              )
+          script.write_text(text.replace(marker, overlay, 1))
+          print(f"Enabled writable RomFS mod overlay in {script}")
+          PY
+
+          echo "NXNATIVE_MODS_DIR=$MODS_DIR" >> "$GITHUB_ENV"
+          echo "NXNATIVE_MODS_SCRIPT=$WORK/apply_mods.py" >> "$GITHUB_ENV"
  
       - name: Detect game title ID and select shader profile
         env:
